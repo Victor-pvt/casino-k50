@@ -10,7 +10,7 @@ use Treto\Import1CBundle\Helper\DateTimeHelper;
 
 /**
  * Class TestK50Command
- * php bin/console test:k50 --chipCount=18 --fieldsCount=36
+ * php bin/console test:k50 --chipCount=18 --fieldsCount=36 --env=te
  * @package Treto\Import1CBundle\Command\NoExecute
  */
 class TestK50Command extends ContainerAwareCommand
@@ -33,8 +33,7 @@ class TestK50Command extends ContainerAwareCommand
                 InputOption::VALUE_REQUIRED,
                 'количество фишек',
                 0
-            )
-        ;
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -45,32 +44,40 @@ class TestK50Command extends ContainerAwareCommand
 
         $fieldsCount = $input->getOption('fieldsCount');
         $chipCount = $input->getOption('chipCount');
-        if($fieldsCount == 0 or $chipCount == 0){
+        if ($fieldsCount == 0 or $chipCount == 0) {
             $output->writeln("не введены параметры");
+
+            return;
+        }
+        if ($fieldsCount <= $chipCount) {
+            $output->writeln("фишек больше ячеек");
+
+            return;
         }
         $maxFlout = pow(2, $fieldsCount) - 1;
         $startFlout = pow(2, $chipCount);
         $out = [];
         $count = 0;
         for ($i = $maxFlout; $i >= $startFlout; $i--) {
-            $echo = decbin($i-1);
+            $echo = decbin($i - 1);
             $digit = str_replace('0', '', $echo);
-            if(strlen($digit) == $chipCount){
+            if (strlen($digit) == $chipCount) {
                 $key = md5($echo);
                 $echo = str_pad($echo, $fieldsCount, "0", STR_PAD_LEFT);
                 $out[$key] = $echo;
                 $output->write(sprintf("\r* Сохранено в массив: %4d of %d", count($out), $maxFlout));
             }
-            $count ++;
+            $count++;
         }
-        $echo = PHP_EOL . "Подготвлены данные в количестве " . count($out) ;
+        $echo = PHP_EOL . "Подготвлены данные в количестве " . count($out);
         $output->writeln($echo);
         $this->printData($out);
         $ymTime = microtime(true) - $ymTime;
-        $echo = "Затрачено время " . $ymTime ;
+        $echo = "Затрачено время " . $ymTime;
         $output->writeln($echo);
         $output->writeln("End " . DateTimeHelper::getDateString());
     }
+
     /**
      * печать полученных данных
      * @param $out
@@ -78,14 +85,14 @@ class TestK50Command extends ContainerAwareCommand
     protected function printData($out)
     {
 
-        $file = 'out-'. DateTimeHelper::getDateString().'.txt';
+        $file = 'out-' . DateTimeHelper::getDateString() . '.txt';
         $len = count($out);
-        if($len<10){
+        if ($len < 10) {
             $str = 'менее 10 вариантов';
 
-        }else{
+        } else {
             $str = $len . ' вариантов' . PHP_EOL;
-            foreach ($out as $t){
+            foreach ($out as $t) {
                 $str .= $t . PHP_EOL;
             }
         }
