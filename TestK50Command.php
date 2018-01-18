@@ -10,7 +10,7 @@ use Treto\Import1CBundle\Helper\DateTimeHelper;
 
 /**
  * Class TestK50Command
- * php bin/console test:k50 --chipCount=18 --fieldsCount=36 --env=te
+ * php bin/console test:k50 --chipCount=18 --fieldsCount=36
  * @package Treto\Import1CBundle\Command\NoExecute
  */
 class TestK50Command extends ContainerAwareCommand

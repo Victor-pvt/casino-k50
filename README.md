@@ -10,7 +10,7 @@
 
 команда 
 
-php bin/console test:k50 --chipCount=18 --fieldsCount=36 --env=te
+php bin/console test:k50 --chipCount=18 --fieldsCount=36
 
 параметры
 
