@@ -15,6 +15,14 @@ use Treto\Import1CBundle\Helper\DateTimeHelper;
  */
 class TestK50Command extends ContainerAwareCommand
 {
+    private $file;
+    public function __construct()
+    {
+        $this->file = 'out-' . DateTimeHelper::getDateString() . '.txt';
+
+        parent::__construct();
+    }
+
     protected function configure()
     {
         $this
@@ -56,54 +64,94 @@ class TestK50Command extends ContainerAwareCommand
         }
         $maxFlout = pow(2, $fieldsCount) - 1;
         $startFlout = pow(2, $chipCount);
-        $out = [];
         $count = 0;
-        for ($i = $maxFlout; $i >= $startFlout; $i--) {
-            $echo = decbin($i - 1);
-            $digit = str_replace('0', '', $echo);
-            if (strlen($digit) == $chipCount) {
-                $key = md5($echo);
-                $echo = str_pad($echo, $fieldsCount, "0", STR_PAD_LEFT);
-                $out[$key] = $echo;
-                $output->write(sprintf("\r* Сохранено в массив: %4d of %d", count($out), $maxFlout));
+        $outputCount = $this->checkOutputCount($fieldsCount, $chipCount );
+        $t = 1;
+        if($outputCount>10){
+            $str = $this->printThenCount($outputCount);
+            $output->writeln($str);
+            $out = [];
+            for ($i = $maxFlout; $i >= $startFlout; $i--) {
+                $echo = decbin($i - 1);
+                $digit = str_replace('0', '', $echo);
+                if (strlen($digit) == $chipCount) {
+                    $key = md5($echo);
+                    $echo = str_pad($echo, $fieldsCount, "0", STR_PAD_LEFT);
+                    $out[$key] = $echo;
+                    $output->write(sprintf("\r* Сохранено в массив: %4d of %d", count($out), $maxFlout));
+                    $t++;
+                    if($t>100){
+                        $this->printData($out);
+                        $t=0;
+                        $out = [];
+                    }
+                }
+                $count++;
             }
-            $count++;
+            if($t>0){
+                $this->printData($out);
+            }
+
+        }else{
+            $str = $this->printLessCount();
+            $output->writeln($str);
+
+            return;
         }
         $echo = PHP_EOL . "Подготвлены данные в количестве " . count($out);
         $output->writeln($echo);
-        $this->printData($out);
+//        $this->printData($out);
         $ymTime = microtime(true) - $ymTime;
         $echo = "Затрачено время " . $ymTime;
         $output->writeln($echo);
         $output->writeln("End " . DateTimeHelper::getDateString());
     }
 
+    private function printLessCount()
+    {
+        $str = 'менее 10 вариантов';
+        file_put_contents($this->file, $str, FILE_APPEND);
+
+        return $str;
+    }
+    private function printThenCount($outputCount)
+    {
+        $str = $outputCount . ' вариантов' . PHP_EOL;
+        file_put_contents($this->file, $str, FILE_APPEND);
+
+        return $str;
+    }
+
+    function checkOutputCount($fieldsCount, $chipCount)
+    {
+        $s1 = $this->factorial($fieldsCount);
+        $s2 = $this->factorial($chipCount);
+        $_s2 = $this->factorial($fieldsCount- $chipCount);
+        $_s1 = $_s2 *$s2;
+        $outputCount = $s1 / $_s1 ;
+
+        return $outputCount;
+    }
+
+    /**
+     * @param $x
+     * @return int
+     */
+    function factorial($x)
+    {
+        if ($x === 0) return 1;
+        else return $x*$this->factorial($x-1);
+    }
     /**
      * печать полученных данных
      * @param $out
      */
     protected function printData($out)
     {
-
-        $file = 'out-' . DateTimeHelper::getDateString() . '.txt';
-        $len = count($out);
-        if ($len < 10) {
-            $str = 'менее 10 вариантов';
-
-        } else {
-            $str = $len . ' вариантов' . PHP_EOL;
-            foreach ($out as $t) {
-                $str .= $t . PHP_EOL;
-            }
+        $str = '';
+        foreach ($out as $t) {
+            $str .= $t . PHP_EOL;
         }
-
-        file_put_contents($file, $str, FILE_APPEND);
+        file_put_contents($this->file, $str, FILE_APPEND);
     }
-//    static public function getDateString($date = null, $format = null)
-//    {
-//        $format = $format ? $format : 'Y-m-d H:i:s';
-//        $date = $date ? $date : new DateTime();
-//
-//        return $date->format($format);
-//    }
 }
